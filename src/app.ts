@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import userRouter from "./routes/user.route.js";
 import { notFound } from "./errors/notFound.js";
 import { errorHandler } from "./errors/errorHandler.js";
+import taskRouter from "./routes/task.route.js";
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/tasks", taskRouter);
 
 app.use(notFound);
 app.use(errorHandler);

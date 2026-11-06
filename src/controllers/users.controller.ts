@@ -39,7 +39,7 @@ export const register: RequestHandler = asyncErrorHandler(
       `
         INSERT INTO users (full_name, email, password_hash)
         VALUES ($1, $2, $3)
-        RETURNING id, full_name, email
+        RETURNING id, full_name, email, role
         `,
       [fullName, email, passwordHash],
     );
@@ -120,9 +120,14 @@ export const update: RequestHandler = asyncErrorHandler(
 
     const result2 = await pool.query<DatabaseUsers>(
       `UPDATE users 
-         SET full_name = COALESCE($1, full_name), email = COALESCE($2, email), password_hash = COALESCE($3, password_hash)
+         SET 
+         full_name = COALESCE($1, full_name), 
+         email = COALESCE($2, email), 
+         password_hash = COALESCE($3, password_hash),
+         updated_at = NOW()
          WHERE id = $4
-         RETURNING id, full_name, email
+
+         RETURNING id, full_name, email, updated_at
         `,
       [fullName, email, passwordHash, id],
     );
@@ -182,7 +187,7 @@ export const profile: RequestHandler = asyncErrorHandler(
     }
 
     const result = await pool.query<DatabaseUsers>(
-      `SELECT id, full_name, email
+      `SELECT id, full_name, email, role
         FROM users
         WHERE id = $1 AND email = $2
         `,
@@ -199,6 +204,92 @@ export const profile: RequestHandler = asyncErrorHandler(
       id: result.rows[0].id,
       name: result.rows[0].full_name,
       email: result.rows[0].email,
+      role: result.rows[0].role,
+    });
+  },
+);
+
+export const getAllUsers: RequestHandler = asyncErrorHandler(
+  async (req, res, next): Promise<void> => {
+    const id = req.user?.id;
+    const email = req.user?.email;
+
+    if (!id) {
+      return next(new ApiError(403, "Please login to continue"));
+    }
+
+    if (!email) {
+      return next(new ApiError(403, "Please login to continue"));
+    }
+
+    // const result = await pool.query<DatabaseUsers>(
+    //   `SELECT id, email
+    //   FROM users
+    //   WHERE id = $1 AND email = $2
+    //   `,
+    //   [id, email],
+    // );
+
+    // if (!result.rows[0]) {
+    //   return next(new ApiError(404, "Please login to continue"));
+    // }
+
+    const result = await pool.query<DatabaseUsers>(
+      `SELECT id, full_name, email, role, created_at, updated_at
+      FROM users
+      ORDER BY created_at DESC
+      `,
+    );
+
+    if (!result.rows) {
+      return next(new ApiError(404, "Users not found"));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Users retrieved successfully",
+      results: result.rowCount,
+      data: result.rows,
+    });
+  },
+);
+
+export const getOneUser: RequestHandler = asyncErrorHandler(
+  async (req, res, next) => {
+    const id = req.user?.id;
+    const email = req.user?.email;
+    const userId = req.params.userId;
+
+    if (!id) {
+      return next(new ApiError(403, "Please login to continue"));
+    }
+
+    if (!email) {
+      return next(new ApiError(403, "Please login to continue"));
+    }
+
+    if (!userId) {
+      return next(
+        new ApiError(400, "Please provide the user id in your request"),
+      );
+    }
+
+    const result = await pool.query<DatabaseUsers>(
+      `SELECT id, full_name, email, role
+      FROM users
+      WHERE id = $1
+      `,
+      [userId],
+    );
+
+    if (!result.rows[0]) {
+      return next(new ApiError(404, "Users not found"));
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User retrieved successfully",
+      data: result.rows[0],
     });
   },
 );

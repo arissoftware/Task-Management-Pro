@@ -8,6 +8,7 @@ export interface Users {
   fullName: string;
   email: string;
   password: string;
+  role: string;
   updatedAt: Date;
   createdAt: Date;
 }
@@ -17,6 +18,7 @@ export interface DatabaseUsers {
   full_name: string;
   email: string;
   password_hash: string;
+  role: string;
   updated_at: Date;
   created_at: Date;
 }
@@ -33,10 +35,7 @@ export interface UpdateUser {
   createdAt: Date;
 }
 
-// export interface Payload {
-//   id: string;
-//   email: string;
-// }
+export type UserRole = "USER" | "ADMIN";
 
 export type TaskStatus = "Pending" | "InProgress" | "Completed";
 export type TaskPriority = "Low" | "Medium" | "High";

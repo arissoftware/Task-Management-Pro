@@ -29,7 +29,7 @@ export const authenticate: RequestHandler = asyncErrorHandler(
     };
 
     const result = await pool.query<DatabaseUsers>(
-      `SELECT id, email
+      `SELECT id, email, role
         FROM users
         WHERE id = $1 AND email = $2
         `,
